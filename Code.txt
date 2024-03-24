@@ -1,0 +1,129 @@
+#This code automates the process of collecting text data related to immigration policies from multiple URLs. 
+#By providing a list of URLs concerning immigration policies, the code scrapes the web pages to extract paragraphs containing 80 to 180 words each, ensuring uniqueness across all paragraphs. 
+#This automation streamlines the data collection process, allowing for the extraction of relevant information directly from the web sources. 
+#Additionally, specific conditions can be applied to tailor the data extraction process according to specific requirements or preferences. 
+#Ultimately, the output of this code consists of text files containing the extracted paragraphs, facilitating further analysis or processing of the collected data.
+
+# Import necessary libraries
+import requests  # Library for making HTTP requests
+from bs4 import BeautifulSoup  # Library for web scraping
+import os  # Library for interacting with the operating system
+
+# Function to scrape paragraphs from a given URL
+def scrape_paragraphs(url):
+    # Send a GET request to the URL
+    response = requests.get(url)
+    # Check if the request was successful (status code 200)
+    if response.status_code == 200:
+        # Parse the HTML content of the page using BeautifulSoup
+        soup = BeautifulSoup(response.content, 'html.parser')
+        # Find all paragraphs (<p> tags) in the HTML content
+        paragraphs = soup.find_all('p')
+        # Filter relevant paragraphs based on word count (between 80 and 100 words)
+        relevant_paragraphs = [p.get_text() for p in paragraphs if 80 <= len(p.get_text().split()) <= 100]
+        # Limit the number of relevant paragraphs to 20
+        return relevant_paragraphs[:20]
+    else:
+        # Print an error message if the request fails
+        print("Failed to retrieve page:", response.status_code)
+        return None
+
+# Mount Google Drive to save files
+from google.colab import drive
+drive.mount('/content/drive')
+
+# Folder path where the text files will be saved
+folder_path = '/content/drive/My Drive/Paragraphs-unique'
+
+# Create the folder if it doesn't exist
+if not os.path.exists(folder_path):
+    os.makedirs(folder_path)
+
+# List of URLs related to immigration policies
+urls = [
+"https://www.uscis.gov/laws-and-policy",
+         "https://www.pewresearch.org/short-reads/2022/01/11/key-facts-about-u-s-immigration-policies-and-bidens-proposed-changes/",
+         "https://cis.org/Historical-Overview-Immigration-Policy", "https://www.cfr.org/report/us-immigration-policy",
+         "https://www.europarl.europa.eu/factsheets/en/sheet/152/immigration-policy", "https://www.cfr.org/backgrounder/what-canadas-immigration-policy",
+         "https://www.kff.org/racial-equity-and-health-policy/issue-brief/2023-update-on-key-federal-immigration-policies-and-implications-for-health/",
+         "https://en.wikipedia.org/wiki/Immigration_policy_of_the_United_States", "https://immigrantjustice.org/issues/decriminalize-immigration",
+         "https://democrats.org/where-we-stand/party-platform/creating-a-21st-century-immigration-system/",
+         "https://www.pewresearch.org/short-reads/2015/09/30/how-u-s-immigration-laws-and-rules-have-changed-through-history/",
+         "https://www.businessroundtable.org/policy-perspectives/immigration/a-modern-approach-to-us-immigration-policy", "https://www.uscis.gov/policy-manual",
+         "https://www.economist.com/united-states/2024/01/25/how-americas-failed-immigration-policies-might-cost-joe-biden-the-election",
+         "https://www.thecanadianencyclopedia.ca/en/article/immigration-policy",
+         "https://www.brookings.edu/articles/us-immigration-policy-a-classic-unappreciated-example-of-structural-racism/",
+         "https://www.paxlaw.ca/immigration/?gad_source=1&gclid=Cj0KCQjw-_mvBhDwARIsAA-Q0Q7RPNilXyzvTxkH113H7_uaag6oNZOXf2u_0avAu4vJh5Y79_IP4uAaAndlEALw_wcB",
+         "https://www.law.cornell.edu/wex/immigration", "https://en.wikipedia.org/wiki/Immigration_policy_of_the_Joe_Biden_administration",
+         "https://history.state.gov/milestones/1921-1936/immigration-act", "https://globalmigration.ucdavis.edu/migration-policies",
+         "https://www.whitehouse.gov/priorities/", "https://pier21.ca/research/immigration-history/canadian-immigration-acts-and-legislation",
+         "https://www.nolo.com/legal-encyclopedia/who-has-the-power-to-change-u-s-immigration-law.html", "https://immigration.procon.org/",
+         "https://www.dol.gov/general/topic/discrimination/immdisc", "https://bipartisanpolicy.org/policy-area/immigration/",
+         "https://foreignpolicy.com/2023/06/29/immigration-refugee-policy-greece-shipwreck-mediterranean-europe-us/",
+         "https://www.businessroundtable.org/policy-perspectives/immigration/economic-impact/economic-impact-of-immigration-policies",
+         "https://open.lib.umn.edu/immigrantfamilies/chapter/1-1-immigration-policy/",
+         "https://encyclopedia.ushmm.org/content/en/article/immigration-to-the-united-states-1933-41",
+         "https://www.gov.im/categories/travel-traffic-and-motoring/immigration/immigration-rules-and-associated-policy/",
+         "https://www.aph.gov.au/About_Parliament/Parliamentary_departments/Parliamentary_Library/pubs/rp/BudgetReview201819/Immigration",
+         "https://www.chicagobooth.edu/review/why-the-us-should-free-its-immigration-policies",
+         "https://www.paxlaw.ca/immigration/?gad_source=1&gclid=Cj0KCQjw-_mvBhDwARIsAA-Q0Q43rkRGhXHLa4W9eW3H-Aig-3zWcFdYLmrBTRbHuUfEkCUALyqh520aAsF6EALw_wcB",
+         "https://www.npr.org/2024/03/22/1240108523/republican-led-states-aim-to-advance-their-own-immigration-laws",
+         "https://www.ilrc.org/state-map-immigration-enforcement", "https://www.texastribune.org/2023/04/27/texas-immigration-title-42-biden-policy/",
+         "https://hr.virginia.edu/careers-uva/immigration-services/immigration-policies-and-procedures",
+         "https://travel.state.gov/content/travel/en/legal/visa-law0/laws-regulations/us-visa-policy.html",
+         "https://www.brookings.edu/articles/immigration-policy-could-determine-the-next-president-of-the-united-states/",
+         "https://www.act.org.nz/immigration", "https://www.urban.org/data-tools/state-immigration-policy-resource",
+         "https://www.flgov.com/2023/05/10/governor-ron-desantis-signs-strongest-anti-illegal-immigration-legislation-in-the-country-to-combat-bidens-border-crisis/",
+         "https://networklobby.org/historyimmigration/",
+         "https://www.whitehouse.gov/omb/briefing-room/2023/03/09/fact-sheet-president-bidens-budget-strengthens-border-security-enhances-legal-pathways-and-provides-resources-to-enforce-our-immigration-laws/",
+         "https://immigrantjustice.org/staff/blog/humane-solutions-work-10-ways-biden-administration-should-reshape-immigration-policy",
+         "https://www.dhs.gov/border-immigration-and-trade-policy", "https://www.iom.int/immigration-and-border-governance",
+         "https://obamawhitehouse.archives.gov/issues/immigration/immigration-action",
+         "https://www.vox.com/politics/24080265/trump-immigration-policies-2024",
+         "https://www.lewissilkin.com/en/insights/uk-immigration-policies-announced-to-lower-net-migration",
+         "https://www.carnegie.org/our-work/article/what-does-end-title-42-mean-us-migration-policy/",
+         "https://www.kff.org/racial-equity-and-health-policy/poll-finding/political-preferences-and-views-on-us-immigration-policy-among-immigrants-in-the-us/",
+         "https://www.gob.mx/sre/prensa/mexico-s-migration-policy-is-sovereign-seeks-to-protect-migrants-rights", "https://immigrantcovid.umn.edu/immigration-policy",
+         "https://www.forbes.com/sites/stuartanderson/2020/08/26/fact-check-and-review-of-trump-immigration-policy/?sh=3f4cf8c656c0",
+         "https://spectrumlocalnews.com/tx/south-texas-el-paso/politics/2024/03/20/as-texas-border-arrests-law-teeters-in-court--other-gop-states-also-push-tougher-immigration-policy",
+         "https://www.aclu.org/news/immigrants-rights/white-supremacy-is-fueling-extreme-anti-immigrant-policy-in-texas",
+         "https://www.weku.org/2024-03-22/republican-led-states-aim-to-advance-their-own-immigration-laws",
+         "https://www.texastribune.org/2023/12/18/texas-governor-abbott-bills-border-wall-illegal-entry-crime-sb3-sb4/",
+         "https://www.nationalaffairs.com/publications/detail/our-evolving-immigration-policy"
+]
+
+# List to store unique paragraphs
+unique_paragraphs = []
+
+# Counter for the number of files created
+file_counter = 0
+
+# Scrape paragraphs from each URL in the list
+for url in urls:
+    # Call the scrape_paragraphs function to get paragraphs from the current URL
+    paragraphs = scrape_paragraphs(url)
+    # Check if paragraphs were scraped successfully
+    if paragraphs:
+        # Loop through each paragraph
+        for paragraph in paragraphs:
+            # Check if the paragraph is unique
+            if paragraph not in unique_paragraphs:
+                # Add the paragraph to the list of unique paragraphs
+                unique_paragraphs.append(paragraph)
+                # Increment the file counter
+                file_counter += 1
+                # Write the paragraph to a text file
+                with open(os.path.join(folder_path, f'{file_counter}.txt'), 'w') as f:
+                    f.write(paragraph)
+                # Check if the limit of 200 files has been reached
+                if file_counter >= 200:
+                    break
+    else:
+        # Print a message if no paragraphs were scraped from the current URL
+        print("No paragraphs scraped.")
+    # Check if the limit of 200 files has been reached
+    if file_counter >= 200:
+        break
+
+# Print a message indicating that files were saved successfully
+print("Files saved successfully.")
